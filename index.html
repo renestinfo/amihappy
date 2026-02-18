@@ -2,20 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Am I Happy Today?</title>
     <style>
         body {
             margin: 0;
             height: 100vh;
             background-color: #f0f2f5;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             cursor: none;
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+                padding: 1rem 0.5rem;
+                min-height: 100vh;
+                height: auto;
+            }
+        }
+
+        body.dark-mode {
+            background-color: #0a0a0a;
+            color: #ffffff;
         }
 
         h1 {
@@ -23,6 +42,25 @@
             margin-bottom: 2rem;
             font-size: 3rem;
             text-align: center;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode h1 {
+            color: #ffffff;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
         }
 
         .answer {
@@ -32,22 +70,88 @@
             text-align: center;
         }
 
+        @media (max-width: 768px) {
+            .answer {
+                font-size: 2.5rem;
+                margin: 0.75rem 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .answer {
+                font-size: 2rem;
+                margin: 0.5rem 0;
+            }
+        }
+
         .market-info {
             margin-top: 1rem;
             color: #666;
             font-size: 1.2rem;
             text-align: center;
+            transition: color 0.3s ease;
+            padding: 0 1rem;
+        }
+
+        body.dark-mode .market-info {
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .market-info {
+                font-size: 1rem;
+                margin-top: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .market-info {
+                font-size: 0.9rem;
+                margin-top: 0.5rem;
+            }
         }
 
         .really-happy-section {
             margin-top: 3rem;
             text-align: center;
+            padding: 0 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .really-happy-section {
+                margin-top: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .really-happy-section {
+                margin-top: 1.5rem;
+            }
         }
 
         .really-happy-title {
             font-size: 2rem;
             color: #1a1a1a;
             margin-bottom: 1rem;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .really-happy-title {
+            color: #ffffff;
+        }
+
+        @media (max-width: 768px) {
+            .really-happy-title {
+                font-size: 1.5rem;
+                margin-bottom: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .really-happy-title {
+                font-size: 1.25rem;
+                margin-bottom: 0.5rem;
+            }
         }
 
         .ticker-input {
@@ -58,12 +162,54 @@
             text-transform: uppercase;
             text-align: center;
             width: 150px;
+            background-color: white;
+            color: #1a1a1a;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+            -webkit-appearance: none;
+            appearance: none;
+            touch-action: manipulation;
+        }
+
+        body.dark-mode .ticker-input {
+            background-color: #1a1a1a;
+            border-color: #444;
+            color: #ffffff;
+        }
+
+        @media (max-width: 768px) {
+            .ticker-input {
+                width: 180px;
+                padding: 0.875rem 1rem;
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .ticker-input {
+                width: 200px;
+                padding: 1rem;
+                font-size: 1rem;
+            }
         }
 
         .really-happy-answer {
             font-size: 2.5rem;
             font-weight: bold;
             margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .really-happy-answer {
+                font-size: 2rem;
+                margin-top: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .really-happy-answer {
+                font-size: 1.75rem;
+                margin-top: 0.5rem;
+            }
         }
 
         .cursor {
@@ -75,6 +221,18 @@
             will-change: transform;
         }
 
+        @media (max-width: 768px) {
+            .cursor {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cursor {
+                font-size: 1.25rem;
+            }
+        }
+
         .other-cursor {
             position: fixed;
             pointer-events: none;
@@ -83,12 +241,102 @@
             will-change: transform;
             transition: opacity 0.3s ease;
         }
+
+        @media (max-width: 768px) {
+            .other-cursor {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .other-cursor {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* Hide cursor on mobile devices */
+        @media (hover: none) and (pointer: coarse) {
+            body {
+                cursor: default;
+            }
+            
+            .cursor {
+                display: none;
+            }
+        }
+
+        /* Prevent text selection on mobile */
+        @media (max-width: 768px) {
+            * {
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            h1, .answer, .market-info, .really-happy-title, .really-happy-answer {
+                user-select: none;
+                -webkit-user-select: none;
+            }
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            background-color: white;
+            color: #1a1a1a;
+            cursor: pointer;
+            z-index: 10000;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: #f0f0f0;
+        }
+
+        .dark-mode-toggle:active {
+            transform: scale(0.95);
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background-color: #1a1a1a;
+            border-color: #444;
+            color: #ffffff;
+        }
+
+        body.dark-mode .dark-mode-toggle:hover {
+            background-color: #2a2a2a;
+        }
+
+        @media (max-width: 768px) {
+            .dark-mode-toggle {
+                bottom: 15px;
+                right: 15px;
+                padding: 0.875rem 1.25rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dark-mode-toggle {
+                bottom: 10px;
+                right: 10px;
+                padding: 0.75rem 1rem;
+                font-size: 0.85rem;
+            }
+        }
     </style>
 </head>
 <body>
     <h1>Am I Happy Today?</h1>
     <div id="answer" class="answer">Loading...</div>
-    <div id="marketInfo" class="market-info">Checking S&P 500...</div>
+    <div id="marketInfo" class="market-info">Checking market...</div>
     
     <div class="really-happy-section">
         <h2 class="really-happy-title">Am I Really Happy?</h2>
@@ -97,6 +345,7 @@
     </div>
     
     <div id="myCursor" class="cursor">😐</div>
+    <button id="darkModeToggle" class="dark-mode-toggle">🌙 Dark Mode</button>
 
     <script>
         const cursor = document.getElementById('myCursor');
@@ -111,7 +360,26 @@
         const checkInterval = 50;
         let userCursorX = 0;
         let userCursorY = 0;
+        let darkMode = false;
 
+        // Load dark mode preference
+        const savedDarkMode = localStorage.getItem('darkMode');
+        if (savedDarkMode === 'true') {
+            darkMode = true;
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkModeToggle').textContent = '☀️ Light Mode';
+        }
+
+        // Dark mode toggle
+        document.getElementById('darkModeToggle').addEventListener('click', () => {
+            darkMode = !darkMode;
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', darkMode.toString());
+            document.getElementById('darkModeToggle').textContent = darkMode ? '☀️ Light Mode' : '🌙 Dark Mode';
+            checkMarket(); // Refresh market data
+        });
+
+        // Handle mouse movement (desktop)
         document.addEventListener('mousemove', (e) => {
             requestAnimationFrame(() => {
                 userCursorX = e.clientX;
@@ -126,6 +394,25 @@
                 }
             });
         });
+
+        // Handle touch movement (mobile)
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                requestAnimationFrame(() => {
+                    userCursorX = touch.clientX;
+                    userCursorY = touch.clientY;
+                    cursor.style.left = touch.clientX + 'px';
+                    cursor.style.top = touch.clientY + 'px';
+                    
+                    const now = Date.now();
+                    if (now - lastCheckTime >= checkInterval) {
+                        checkProximity(touch.clientX, touch.clientY);
+                        lastCheckTime = now;
+                    }
+                });
+            }
+        }, { passive: true });
 
         function checkProximity(userX, userY) {
             let isNearOther = false;
@@ -161,18 +448,46 @@
 
         async function checkMarket() {
             try {
-                const response = await fetch('./spy.json', { cache: 'no-store' });
-                const data = await response.json();
-                
-                // Finnhub quote format: { c: current, pc: previous close, ... }
-                const changePercent = ((data.c - data.pc) / data.pc) * 100;
-                isMarketPositive = changePercent >= 0;
-                
-                answer.textContent = isMarketPositive ? 'YES! 😊' : 'NO 😟';
-                answer.style.color = isMarketPositive ? '#22c55e' : '#ef4444';
-                marketInfo.textContent = `SPY is ${isMarketPositive ? 'up' : 'down'} ${Math.abs(changePercent).toFixed(2)}% today`;
-                
-                cursor.textContent = isMarketPositive ? '🤔' : '😟';
+                if (darkMode) {
+                    // Fetch BTC/USD using Yahoo Finance with CORS proxy
+                    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?interval=1d&range=2d`;
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+                    
+                    const response = await fetch(proxyUrl);
+                    const proxyData = await response.json();
+                    const data = JSON.parse(proxyData.contents);
+                    
+                    if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+                        throw new Error('No BTC data');
+                    }
+                    
+                    const result = data.chart.result[0];
+                    const currentPrice = result.meta.regularMarketPrice;
+                    const previousClose = result.meta.previousClose;
+                    
+                    const changePercent = ((currentPrice - previousClose) / previousClose) * 100;
+                    isMarketPositive = changePercent >= 0;
+                    
+                    answer.textContent = isMarketPositive ? 'YES! 😊' : 'NO 😟';
+                    answer.style.color = isMarketPositive ? '#22c55e' : '#ef4444';
+                    marketInfo.textContent = `BTC/USD is ${isMarketPositive ? 'up' : 'down'} ${Math.abs(changePercent).toFixed(2)}% today`;
+                    
+                    cursor.textContent = isMarketPositive ? '🤔' : '😟';
+                } else {
+                    // Fetch SPY from spy.json
+                    const response = await fetch('./spy.json', { cache: 'no-store' });
+                    const data = await response.json();
+                    
+                    // Finnhub quote format: { c: current, pc: previous close, ... }
+                    const changePercent = ((data.c - data.pc) / data.pc) * 100;
+                    isMarketPositive = changePercent >= 0;
+                    
+                    answer.textContent = isMarketPositive ? 'YES! 😊' : 'NO 😟';
+                    answer.style.color = isMarketPositive ? '#22c55e' : '#ef4444';
+                    marketInfo.textContent = `SPY is ${isMarketPositive ? 'up' : 'down'} ${Math.abs(changePercent).toFixed(2)}% today`;
+                    
+                    cursor.textContent = isMarketPositive ? '🤔' : '😟';
+                }
             } catch (error) {
                 answer.textContent = 'Market Closed 😴';
                 marketInfo.textContent = 'Unable to fetch market data';
@@ -244,11 +559,18 @@
                 id,
                 x: Math.random() * window.innerWidth,
                 y: Math.random() * window.innerHeight,
+                state: 'RAPID_MOVE', // RAPID_MOVE, PAUSE, CIRCLE, JERKY, BACK_FORTH
                 targetX: Math.random() * window.innerWidth,
                 targetY: Math.random() * window.innerHeight,
-                speed: 0.5 + Math.random() * 1.5, // pixels per frame
-                pauseTime: 0,
-                isPaused: false,
+                circleCenterX: 0,
+                circleCenterY: 0,
+                circleAngle: 0,
+                circleRadius: 5 + Math.random() * 15,
+                backForthStartX: 0,
+                backForthStartY: 0,
+                backForthDirection: 1, // 1 or -1
+                backForthDistance: 20 + Math.random() * 40,
+                stateTimer: 0,
                 lastUpdate: performance.now()
             };
 
@@ -271,41 +593,142 @@
                 const now = performance.now();
                 const deltaTime = Math.min(now - cursor.lastUpdate, 50); // cap at 50ms
                 cursor.lastUpdate = now;
+                cursor.stateTimer += deltaTime;
 
-                // Check if we should pause (like a user thinking/reading)
-                if (cursor.isPaused) {
-                    cursor.pauseTime -= deltaTime;
-                    if (cursor.pauseTime <= 0) {
-                        cursor.isPaused = false;
-                        // Pick a new target
-                        cursor.targetX = Math.random() * window.innerWidth;
-                        cursor.targetY = Math.random() * window.innerHeight;
-                    }
-                } else {
-                    // Move toward target
-                    const dx = cursor.targetX - cursor.x;
-                    const dy = cursor.targetY - cursor.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distance < 10) {
-                        // Reached target, pause for a bit
-                        cursor.isPaused = true;
-                        cursor.pauseTime = 500 + Math.random() * 2000; // 0.5-2.5 seconds
-                    } else {
-                        // Move toward target
-                        const moveDistance = cursor.speed * (deltaTime / 16); // normalize to 60fps
-                        const moveX = (dx / distance) * moveDistance;
-                        const moveY = (dy / distance) * moveDistance;
+                // State machine for realistic cursor behavior
+                switch (cursor.state) {
+                    case 'RAPID_MOVE':
+                        // Fast movement to a new area (like clicking or moving to a new section)
+                        const dx = cursor.targetX - cursor.x;
+                        const dy = cursor.targetY - cursor.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        cursor.x += moveX;
-                        cursor.y += moveY;
-                    }
+                        if (distance < 5) {
+                            // Reached target, switch to pause or circle
+                            cursor.state = Math.random() > 0.5 ? 'PAUSE' : 'CIRCLE';
+                            cursor.circleCenterX = cursor.x;
+                            cursor.circleCenterY = cursor.y;
+                            cursor.circleAngle = Math.random() * Math.PI * 2;
+                            cursor.stateTimer = 0;
+                        } else {
+                            // Rapid movement (fast speed)
+                            const speed = 8 + Math.random() * 12; // 8-20 pixels per frame
+                            const moveX = (dx / distance) * speed;
+                            const moveY = (dy / distance) * speed;
+                            cursor.x += moveX;
+                            cursor.y += moveY;
+                        }
+                        
+                        // Switch to pause after max time
+                        if (cursor.stateTimer > 2000) {
+                            cursor.state = 'PAUSE';
+                            cursor.stateTimer = 0;
+                        }
+                        break;
 
-                    // Occasionally change direction (like exploring)
-                    if (Math.random() < 0.01) {
-                        cursor.targetX = Math.random() * window.innerWidth;
-                        cursor.targetY = Math.random() * window.innerHeight;
-                    }
+                    case 'PAUSE':
+                        // Stop and wait (like reading or thinking)
+                        if (cursor.stateTimer > 500 + Math.random() * 2000) {
+                            // After pause, either move rapidly, do small movements, or rapid back-and-forth
+                            const rand = Math.random();
+                            if (rand > 0.4) {
+                                cursor.state = 'RAPID_MOVE';
+                                cursor.targetX = Math.random() * window.innerWidth;
+                                cursor.targetY = Math.random() * window.innerHeight;
+                            } else if (rand > 0.2) {
+                                cursor.state = 'JERKY';
+                                cursor.circleCenterX = cursor.x;
+                                cursor.circleCenterY = cursor.y;
+                            } else {
+                                cursor.state = 'BACK_FORTH';
+                                cursor.backForthStartX = cursor.x;
+                                cursor.backForthStartY = cursor.y;
+                                cursor.backForthDirection = Math.random() > 0.5 ? 1 : -1;
+                                cursor.backForthDistance = 20 + Math.random() * 40;
+                                // Random angle for back-and-forth movement
+                                cursor.circleAngle = Math.random() * Math.PI * 2;
+                            }
+                            cursor.stateTimer = 0;
+                        }
+                        break;
+
+                    case 'CIRCLE':
+                        // Small circular movements (like hovering or exploring)
+                        cursor.circleAngle += 0.1 + Math.random() * 0.2; // Variable speed
+                        const radius = cursor.circleRadius;
+                        cursor.x = cursor.circleCenterX + Math.cos(cursor.circleAngle) * radius;
+                        cursor.y = cursor.circleCenterY + Math.sin(cursor.circleAngle) * radius;
+                        
+                        // After circling, pause, move rapidly, or rapid back-and-forth
+                        if (cursor.stateTimer > 1000 + Math.random() * 1500) {
+                            const rand = Math.random();
+                            if (rand > 0.5) {
+                                cursor.state = 'PAUSE';
+                            } else if (rand > 0.25) {
+                                cursor.state = 'RAPID_MOVE';
+                                cursor.targetX = Math.random() * window.innerWidth;
+                                cursor.targetY = Math.random() * window.innerHeight;
+                            } else {
+                                cursor.state = 'BACK_FORTH';
+                                cursor.backForthStartX = cursor.x;
+                                cursor.backForthStartY = cursor.y;
+                                cursor.backForthDirection = Math.random() > 0.5 ? 1 : -1;
+                                cursor.backForthDistance = 20 + Math.random() * 40;
+                                cursor.circleAngle = Math.random() * Math.PI * 2;
+                            }
+                            cursor.stateTimer = 0;
+                        }
+                        break;
+
+                    case 'JERKY':
+                        // Small random jerky movements (like micro-adjustments)
+                        cursor.x += (Math.random() - 0.5) * 3;
+                        cursor.y += (Math.random() - 0.5) * 3;
+                        
+                        // Keep near center
+                        const centerDx = cursor.circleCenterX - cursor.x;
+                        const centerDy = cursor.circleCenterY - cursor.y;
+                        const centerDist = Math.sqrt(centerDx * centerDx + centerDy * centerDy);
+                        if (centerDist > 30) {
+                            cursor.x += centerDx * 0.1;
+                            cursor.y += centerDy * 0.1;
+                        }
+                        
+                        // After jerky movements, pause or move rapidly
+                        if (cursor.stateTimer > 300 + Math.random() * 800) {
+                            if (Math.random() > 0.5) {
+                                cursor.state = 'PAUSE';
+                            } else {
+                                cursor.state = 'RAPID_MOVE';
+                                cursor.targetX = Math.random() * window.innerWidth;
+                                cursor.targetY = Math.random() * window.innerHeight;
+                            }
+                            cursor.stateTimer = 0;
+                        }
+                        break;
+
+                    case 'BACK_FORTH':
+                        // Rapid back-and-forth movement (like someone reading/thinking and moving mouse rapidly)
+                        // Use sine wave for smooth back-and-forth oscillation
+                        const oscillationSpeed = 0.15 + Math.random() * 0.1; // Fast oscillation
+                        const oscillation = Math.sin(cursor.stateTimer * oscillationSpeed) * cursor.backForthDistance;
+                        
+                        // Move along a line in a random direction
+                        cursor.x = cursor.backForthStartX + Math.cos(cursor.circleAngle) * oscillation;
+                        cursor.y = cursor.backForthStartY + Math.sin(cursor.circleAngle) * oscillation;
+                        
+                        // After rapid back-and-forth, pause or move to new area
+                        if (cursor.stateTimer > 500 + Math.random() * 1500) {
+                            if (Math.random() > 0.5) {
+                                cursor.state = 'PAUSE';
+                            } else {
+                                cursor.state = 'RAPID_MOVE';
+                                cursor.targetX = Math.random() * window.innerWidth;
+                                cursor.targetY = Math.random() * window.innerHeight;
+                            }
+                            cursor.stateTimer = 0;
+                        }
+                        break;
                 }
 
                 // Keep within bounds
@@ -316,9 +739,9 @@
                 element.style.top = cursor.y + 'px';
 
                 // Check proximity to user cursor and other cursors
-                const dx = userCursorX - cursor.x;
-                const dy = userCursorY - cursor.y;
-                const distanceToUser = Math.sqrt(dx * dx + dy * dy);
+                const userDx = userCursorX - cursor.x;
+                const userDy = userCursorY - cursor.y;
+                const distanceToUser = Math.sqrt(userDx * userDx + userDy * userDy);
                 
                 let isNearOther = false;
                 otherCursors.forEach((other) => {
@@ -355,9 +778,11 @@
             }
         }
 
-        // Manage cursor population (2-5 cursors at a time)
+        // Manage cursor population (2-5 cursors at a time, fewer on mobile)
         function manageCursors() {
-            const targetCount = 2 + Math.floor(Math.random() * 4); // 2-5 cursors
+            // Reduce cursor count on mobile devices
+            const isMobile = window.innerWidth <= 768;
+            const targetCount = isMobile ? (1 + Math.floor(Math.random() * 2)) : (2 + Math.floor(Math.random() * 4)); // 1-2 on mobile, 2-5 on desktop
             
             if (otherCursors.size < targetCount) {
                 // Add a new cursor
@@ -368,8 +793,10 @@
         checkMarket();
         setInterval(checkMarket, 60000);
 
-        // Create initial cursors
-        for (let i = 0; i < 2; i++) {
+        // Create initial cursors (fewer on mobile)
+        const isMobile = window.innerWidth <= 768;
+        const initialCursorCount = isMobile ? 1 : 2;
+        for (let i = 0; i < initialCursorCount; i++) {
             setTimeout(() => createSimulatedCursor(), i * 2000);
         }
 
