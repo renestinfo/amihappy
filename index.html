@@ -81,6 +81,7 @@
             font-size: 2rem;
             transform: translate(-50%, -50%);
             will-change: transform;
+            transition: opacity 0.3s ease;
         }
     </style>
 </head>
@@ -108,9 +109,13 @@
         let isMarketPositive = false;
         let lastCheckTime = 0;
         const checkInterval = 50;
+        let userCursorX = 0;
+        let userCursorY = 0;
 
         document.addEventListener('mousemove', (e) => {
             requestAnimationFrame(() => {
+                userCursorX = e.clientX;
+                userCursorY = e.clientY;
                 cursor.style.left = e.clientX + 'px';
                 cursor.style.top = e.clientY + 'px';
                 
@@ -122,15 +127,28 @@
             });
         });
 
-        function checkProximity(x, y) {
+        function checkProximity(userX, userY) {
             let isNearOther = false;
 
             otherCursors.forEach((otherCursor) => {
-                const dx = x - otherCursor.x;
-                const dy = y - otherCursor.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+                // Check proximity to user cursor
+                const dx = userX - otherCursor.x;
+                const dy = userY - otherCursor.y;
+                const distanceToUser = Math.sqrt(dx * dx + dy * dy);
 
-                if (distance < proximityThreshold) {
+                // Check proximity to other simulated cursors
+                let isNearOtherCursor = false;
+                otherCursors.forEach((other) => {
+                    if (other.id === otherCursor.id) return;
+                    const dx2 = otherCursor.x - other.x;
+                    const dy2 = otherCursor.y - other.y;
+                    const distanceToOther = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+                    if (distanceToOther < proximityThreshold) {
+                        isNearOtherCursor = true;
+                    }
+                });
+
+                if (distanceToUser < proximityThreshold || isNearOtherCursor) {
                     isNearOther = true;
                     otherCursor.element.textContent = '😊';
                 } else {
@@ -171,10 +189,14 @@
             reallyHappyAnswer.style.color = '#666';
             
             try {
-                // Using Yahoo Finance API (free, no API key needed)
+                // Using Yahoo Finance API with CORS proxy
                 const symbol = ticker.toUpperCase();
-                const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`);
-                const data = await response.json();
+                const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+                
+                const response = await fetch(proxyUrl);
+                const proxyData = await response.json();
+                const data = JSON.parse(proxyData.contents);
                 
                 if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
                     reallyHappyAnswer.textContent = 'Invalid ticker';
@@ -210,34 +232,110 @@
         });
 
         function createSimulatedCursor() {
-            const id = Date.now();
+            const id = Date.now() + Math.random();
             const element = document.createElement('div');
             element.className = 'other-cursor';
             element.textContent = isMarketPositive ? '🤔' : '😟';
+            element.style.opacity = '0';
             document.body.appendChild(element);
 
             const cursor = {
                 element,
+                id,
                 x: Math.random() * window.innerWidth,
-                y: Math.random() * window.innerHeight
+                y: Math.random() * window.innerHeight,
+                targetX: Math.random() * window.innerWidth,
+                targetY: Math.random() * window.innerHeight,
+                speed: 0.5 + Math.random() * 1.5, // pixels per frame
+                pauseTime: 0,
+                isPaused: false,
+                lastUpdate: performance.now()
             };
 
             otherCursors.set(id, cursor);
 
-            let lastFrame = performance.now();
-            function animate(currentTime) {
-                const deltaTime = currentTime - lastFrame;
-                lastFrame = currentTime;
+            // Fade in
+            setTimeout(() => {
+                element.style.opacity = '1';
+            }, 100);
 
-                const speed = 0.1 * deltaTime;
-                cursor.x += (Math.random() - 0.5) * speed;
-                cursor.y += (Math.random() - 0.5) * speed;
+            // Set random lifetime (5-30 seconds)
+            const lifetime = 5000 + Math.random() * 25000;
+            setTimeout(() => {
+                removeSimulatedCursor(id);
+            }, lifetime);
 
+            function animate() {
+                if (!otherCursors.has(id)) return;
+
+                const now = performance.now();
+                const deltaTime = Math.min(now - cursor.lastUpdate, 50); // cap at 50ms
+                cursor.lastUpdate = now;
+
+                // Check if we should pause (like a user thinking/reading)
+                if (cursor.isPaused) {
+                    cursor.pauseTime -= deltaTime;
+                    if (cursor.pauseTime <= 0) {
+                        cursor.isPaused = false;
+                        // Pick a new target
+                        cursor.targetX = Math.random() * window.innerWidth;
+                        cursor.targetY = Math.random() * window.innerHeight;
+                    }
+                } else {
+                    // Move toward target
+                    const dx = cursor.targetX - cursor.x;
+                    const dy = cursor.targetY - cursor.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 10) {
+                        // Reached target, pause for a bit
+                        cursor.isPaused = true;
+                        cursor.pauseTime = 500 + Math.random() * 2000; // 0.5-2.5 seconds
+                    } else {
+                        // Move toward target
+                        const moveDistance = cursor.speed * (deltaTime / 16); // normalize to 60fps
+                        const moveX = (dx / distance) * moveDistance;
+                        const moveY = (dy / distance) * moveDistance;
+                        
+                        cursor.x += moveX;
+                        cursor.y += moveY;
+                    }
+
+                    // Occasionally change direction (like exploring)
+                    if (Math.random() < 0.01) {
+                        cursor.targetX = Math.random() * window.innerWidth;
+                        cursor.targetY = Math.random() * window.innerHeight;
+                    }
+                }
+
+                // Keep within bounds
                 cursor.x = Math.max(0, Math.min(window.innerWidth, cursor.x));
                 cursor.y = Math.max(0, Math.min(window.innerHeight, cursor.y));
 
                 element.style.left = cursor.x + 'px';
                 element.style.top = cursor.y + 'px';
+
+                // Check proximity to user cursor and other cursors
+                const dx = userCursorX - cursor.x;
+                const dy = userCursorY - cursor.y;
+                const distanceToUser = Math.sqrt(dx * dx + dy * dy);
+                
+                let isNearOther = false;
+                otherCursors.forEach((other) => {
+                    if (other.id === cursor.id) return;
+                    const dx2 = cursor.x - other.x;
+                    const dy2 = cursor.y - other.y;
+                    const distanceToOther = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+                    if (distanceToOther < proximityThreshold) {
+                        isNearOther = true;
+                    }
+                });
+                
+                if (distanceToUser < proximityThreshold || isNearOther) {
+                    cursor.element.textContent = '😊';
+                } else {
+                    cursor.element.textContent = isMarketPositive ? '🤔' : '😟';
+                }
 
                 requestAnimationFrame(animate);
             }
@@ -245,12 +343,38 @@
             requestAnimationFrame(animate);
         }
 
+        function removeSimulatedCursor(id) {
+            const cursor = otherCursors.get(id);
+            if (cursor) {
+                // Fade out
+                cursor.element.style.opacity = '0';
+                setTimeout(() => {
+                    cursor.element.remove();
+                    otherCursors.delete(id);
+                }, 300);
+            }
+        }
+
+        // Manage cursor population (2-5 cursors at a time)
+        function manageCursors() {
+            const targetCount = 2 + Math.floor(Math.random() * 4); // 2-5 cursors
+            
+            if (otherCursors.size < targetCount) {
+                // Add a new cursor
+                setTimeout(() => createSimulatedCursor(), Math.random() * 2000);
+            }
+        }
+
         checkMarket();
         setInterval(checkMarket, 60000);
 
-        for (let i = 0; i < 3; i++) {
-            setTimeout(createSimulatedCursor, i * 1000);
+        // Create initial cursors
+        for (let i = 0; i < 2; i++) {
+            setTimeout(() => createSimulatedCursor(), i * 2000);
         }
+
+        // Periodically manage cursor population
+        setInterval(manageCursors, 5000);
     </script>
 </body>
 </html>
