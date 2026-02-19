@@ -446,39 +446,53 @@
             cursor.textContent = isNearOther ? '😊' : (isMarketPositive ? '🤔' : '😟');
         }
 
+        // NYC time: is it after midnight but before market open (9:30 AM ET)?
+        function isPreMarketNYC() {
+            const now = new Date();
+            const nyc = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+            const hours = nyc.getHours();
+            const minutes = nyc.getMinutes();
+            const totalMins = hours * 60 + minutes;
+            return totalMins < 9 * 60 + 30; // before 9:30 AM
+        }
+
         async function checkMarket() {
             try {
                 if (darkMode) {
-                    // Fetch BTC/USD using Yahoo Finance with CORS proxy
-                    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?interval=1d&range=2d`;
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+                    // BTC/USD: use CoinGecko (reliable, no CORS issues)
+                    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
+                    const data = await response.json();
                     
-                    const response = await fetch(proxyUrl);
-                    const proxyData = await response.json();
-                    const data = JSON.parse(proxyData.contents);
-                    
-                    if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+                    if (!data || !data.bitcoin || typeof data.bitcoin.usd !== 'number') {
                         throw new Error('No BTC data');
                     }
                     
-                    const result = data.chart.result[0];
-                    const currentPrice = result.meta.regularMarketPrice;
-                    const previousClose = result.meta.previousClose;
-                    
-                    const changePercent = ((currentPrice - previousClose) / previousClose) * 100;
+                    const changePercent = data.bitcoin.usd_24h_change != null ? data.bitcoin.usd_24h_change : 0;
                     isMarketPositive = changePercent >= 0;
                     
                     answer.textContent = isMarketPositive ? 'YES! 😊' : 'NO 😟';
                     answer.style.color = isMarketPositive ? '#22c55e' : '#ef4444';
-                    marketInfo.textContent = `BTC/USD is ${isMarketPositive ? 'up' : 'down'} ${Math.abs(changePercent).toFixed(2)}% today`;
+                    marketInfo.textContent = `BTC/USD is ${isMarketPositive ? 'up' : 'down'} ${Math.abs(changePercent).toFixed(2)}% (24h)`;
                     
                     cursor.textContent = isMarketPositive ? '🤔' : '😟';
                 } else {
-                    // Fetch SPY from spy.json
+                    // SPY: check NYC pre-market first
+                    if (isPreMarketNYC()) {
+                        answer.textContent = "You don't know";
+                        answer.style.color = darkMode ? '#999' : '#666';
+                        marketInfo.textContent = "Market hasn't opened yet (opens 9:30 AM ET)";
+                        cursor.textContent = '🤷';
+                        isMarketPositive = false;
+                        return;
+                    }
+
                     const response = await fetch('./spy.json', { cache: 'no-store' });
                     const data = await response.json();
                     
-                    // Finnhub quote format: { c: current, pc: previous close, ... }
+                    if (!data || typeof data.c !== 'number' || typeof data.pc !== 'number') {
+                        throw new Error('Invalid SPY data');
+                    }
+                    
                     const changePercent = ((data.c - data.pc) / data.pc) * 100;
                     isMarketPositive = changePercent >= 0;
                     
@@ -489,10 +503,21 @@
                     cursor.textContent = isMarketPositive ? '🤔' : '😟';
                 }
             } catch (error) {
-                answer.textContent = 'Market Closed 😴';
-                marketInfo.textContent = 'Unable to fetch market data';
+                if (!darkMode && isPreMarketNYC()) {
+                    answer.textContent = "You don't know";
+                    answer.style.color = darkMode ? '#999' : '#666';
+                    marketInfo.textContent = "Market hasn't opened yet (opens 9:30 AM ET)";
+                    cursor.textContent = '🤷';
+                } else {
+                    answer.textContent = 'Market Closed 😴';
+                    marketInfo.textContent = darkMode ? 'Unable to fetch BTC data' : 'Unable to fetch market data';
+                }
+                isMarketPositive = false;
             }
         }
+
+        // CoinGecko id for common crypto symbols (no CORS proxy needed)
+        const CRYPTO_IDS = { BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', BNB: 'binancecoin', XRP: 'ripple', DOGE: 'dogecoin', ADA: 'cardano', AVAX: 'avalanche-2', DOT: 'polkadot', MATIC: 'matic-network', LINK: 'chainlink', UNI: 'uniswap', LTC: 'litecoin', ATOM: 'cosmos', NEAR: 'near' };
 
         async function checkTicker(ticker) {
             if (!ticker || !ticker.trim()) {
@@ -503,15 +528,36 @@
             reallyHappyAnswer.textContent = 'Loading...';
             reallyHappyAnswer.style.color = '#666';
             
+            const symbol = ticker.toUpperCase().replace(/-USD$/, ''); // BTC-USD -> BTC
+            
             try {
-                // Using Yahoo Finance API with CORS proxy
-                const symbol = ticker.toUpperCase();
+                const coinId = CRYPTO_IDS[symbol];
+                
+                if (coinId) {
+                    // Crypto: use CoinGecko (no proxy, works in browser)
+                    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`);
+                    const data = await response.json();
+                    
+                    if (!data || !data[coinId] || typeof data[coinId].usd !== 'number') {
+                        reallyHappyAnswer.textContent = 'Invalid ticker';
+                        reallyHappyAnswer.style.color = '#ef4444';
+                        return;
+                    }
+                    
+                    const changePercent = data[coinId].usd_24h_change != null ? data[coinId].usd_24h_change : 0;
+                    const isPositive = changePercent >= 0;
+                    
+                    reallyHappyAnswer.textContent = isPositive ? 'YES 😊' : 'NO 😟';
+                    reallyHappyAnswer.style.color = isPositive ? '#22c55e' : '#ef4444';
+                    return;
+                }
+                
+                // Stock: try Yahoo via corsproxy.io (allorigins often returns 522)
                 const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`;
                 
                 const response = await fetch(proxyUrl);
-                const proxyData = await response.json();
-                const data = JSON.parse(proxyData.contents);
+                const data = await response.json();
                 
                 if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
                     reallyHappyAnswer.textContent = 'Invalid ticker';
