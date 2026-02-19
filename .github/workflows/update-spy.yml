@@ -20,14 +20,14 @@ jobs:
         run: |
           curl -sS "https://finnhub.io/api/v1/quote?symbol=SPY&token=${FINNHUB_TOKEN}" > spy.json
 
-      - name: Commit spy.json (if changed)
+      - name: Commit spy.json (if changed or new)
         run: |
-          if git diff --quiet -- spy.json; then
-            echo "No changes"
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add spy.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
           git commit -m "chore: update SPY quote"
           git push

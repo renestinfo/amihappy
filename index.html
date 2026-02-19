@@ -486,20 +486,45 @@
                         return;
                     }
 
-                    const response = await fetch('./spy.json', { cache: 'no-store' });
-                    const data = await response.json();
-                    
-                    if (!data || typeof data.c !== 'number' || typeof data.pc !== 'number') {
-                        throw new Error('Invalid SPY data');
+                    let data = null;
+                    let changePercent = 0;
+
+                    // 1) Try spy.json from GitHub Action
+                    try {
+                        const res = await fetch('./spy.json', { cache: 'no-store' });
+                        if (res.ok) {
+                            const json = await res.json();
+                            if (json && typeof json.c === 'number' && typeof json.pc === 'number') {
+                                data = json;
+                                changePercent = ((data.c - data.pc) / data.pc) * 100;
+                            }
+                        }
+                    } catch (e) { /* ignore */ }
+
+                    // 2) Fallback: fetch SPY from Yahoo via proxy (works when spy.json is missing)
+                    if (data === null) {
+                        const yahooUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/SPY?interval=1d&range=2d';
+                        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(yahooUrl);
+                        const res = await fetch(proxyUrl);
+                        const json = await res.json();
+                        if (json && json.chart && json.chart.result && json.chart.result[0]) {
+                            const meta = json.chart.result[0].meta;
+                            const current = meta.regularMarketPrice;
+                            const previous = meta.previousClose;
+                            if (typeof current === 'number' && typeof previous === 'number') {
+                                changePercent = ((current - previous) / previous) * 100;
+                            } else {
+                                throw new Error('Invalid SPY data');
+                            }
+                        } else {
+                            throw new Error('Invalid SPY data');
+                        }
                     }
-                    
-                    const changePercent = ((data.c - data.pc) / data.pc) * 100;
+
                     isMarketPositive = changePercent >= 0;
-                    
                     answer.textContent = isMarketPositive ? 'YES! 😊' : 'NO 😟';
                     answer.style.color = isMarketPositive ? '#22c55e' : '#ef4444';
-                    marketInfo.textContent = `SPY is ${isMarketPositive ? 'up' : 'down'} ${Math.abs(changePercent).toFixed(2)}% today`;
-                    
+                    marketInfo.textContent = 'SPY is ' + (isMarketPositive ? 'up' : 'down') + ' ' + Math.abs(changePercent).toFixed(2) + '% today';
                     cursor.textContent = isMarketPositive ? '🤔' : '😟';
                 }
             } catch (error) {
