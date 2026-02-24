@@ -111,107 +111,6 @@
             }
         }
 
-        .really-happy-section {
-            margin-top: 3rem;
-            text-align: center;
-            padding: 0 1rem;
-        }
-
-        @media (max-width: 768px) {
-            .really-happy-section {
-                margin-top: 2rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .really-happy-section {
-                margin-top: 1.5rem;
-            }
-        }
-
-        .really-happy-title {
-            font-size: 2rem;
-            color: #1a1a1a;
-            margin-bottom: 1rem;
-            transition: color 0.3s ease;
-        }
-
-        body.dark-mode .really-happy-title {
-            color: #ffffff;
-        }
-
-        @media (max-width: 768px) {
-            .really-happy-title {
-                font-size: 1.5rem;
-                margin-bottom: 0.75rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .really-happy-title {
-                font-size: 1.25rem;
-                margin-bottom: 0.5rem;
-            }
-        }
-
-        .ticker-input {
-            padding: 0.75rem 1rem;
-            font-size: 1.2rem;
-            border: 2px solid #ccc;
-            border-radius: 5px;
-            text-transform: uppercase;
-            text-align: center;
-            width: 150px;
-            background-color: white;
-            color: #1a1a1a;
-            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-            -webkit-appearance: none;
-            appearance: none;
-            touch-action: manipulation;
-        }
-
-        body.dark-mode .ticker-input {
-            background-color: #1a1a1a;
-            border-color: #444;
-            color: #ffffff;
-        }
-
-        @media (max-width: 768px) {
-            .ticker-input {
-                width: 180px;
-                padding: 0.875rem 1rem;
-                font-size: 1.1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .ticker-input {
-                width: 200px;
-                padding: 1rem;
-                font-size: 1rem;
-            }
-        }
-
-        .really-happy-answer {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-top: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            .really-happy-answer {
-                font-size: 2rem;
-                margin-top: 0.75rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .really-happy-answer {
-                font-size: 1.75rem;
-                margin-top: 0.5rem;
-            }
-        }
-
         .cursor {
             position: fixed;
             pointer-events: none;
@@ -271,7 +170,7 @@
                 -webkit-tap-highlight-color: transparent;
             }
             
-            h1, .answer, .market-info, .really-happy-title, .really-happy-answer {
+            h1, .answer, .market-info {
                 user-select: none;
                 -webkit-user-select: none;
             }
@@ -338,12 +237,6 @@
     <div id="answer" class="answer">Loading...</div>
     <div id="marketInfo" class="market-info">Checking market...</div>
     
-    <div class="really-happy-section">
-        <h2 class="really-happy-title">Am I Really Happy?</h2>
-        <input type="text" id="tickerInput" class="ticker-input" placeholder="Ticker" maxlength="10">
-        <div id="reallyHappyAnswer" class="really-happy-answer"></div>
-    </div>
-    
     <div id="myCursor" class="cursor">😐</div>
     <button id="darkModeToggle" class="dark-mode-toggle">🌙 Dark Mode</button>
 
@@ -351,8 +244,6 @@
         const cursor = document.getElementById('myCursor');
         const answer = document.getElementById('answer');
         const marketInfo = document.getElementById('marketInfo');
-        const tickerInput = document.getElementById('tickerInput');
-        const reallyHappyAnswer = document.getElementById('reallyHappyAnswer');
         const otherCursors = new Map();
         const proximityThreshold = 150;
         let isMarketPositive = false;
@@ -540,82 +431,6 @@
                 isMarketPositive = false;
             }
         }
-
-        // CoinGecko id for common crypto symbols (no CORS proxy needed)
-        const CRYPTO_IDS = { BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', BNB: 'binancecoin', XRP: 'ripple', DOGE: 'dogecoin', ADA: 'cardano', AVAX: 'avalanche-2', DOT: 'polkadot', MATIC: 'matic-network', LINK: 'chainlink', UNI: 'uniswap', LTC: 'litecoin', ATOM: 'cosmos', NEAR: 'near' };
-
-        async function checkTicker(ticker) {
-            if (!ticker || !ticker.trim()) {
-                reallyHappyAnswer.textContent = '';
-                return;
-            }
-            
-            reallyHappyAnswer.textContent = 'Loading...';
-            reallyHappyAnswer.style.color = '#666';
-            
-            const symbol = ticker.toUpperCase().replace(/-USD$/, ''); // BTC-USD -> BTC
-            
-            try {
-                const coinId = CRYPTO_IDS[symbol];
-                
-                if (coinId) {
-                    // Crypto: use CoinGecko (no proxy, works in browser)
-                    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`);
-                    const data = await response.json();
-                    
-                    if (!data || !data[coinId] || typeof data[coinId].usd !== 'number') {
-                        reallyHappyAnswer.textContent = 'Invalid ticker';
-                        reallyHappyAnswer.style.color = '#ef4444';
-                        return;
-                    }
-                    
-                    const changePercent = data[coinId].usd_24h_change != null ? data[coinId].usd_24h_change : 0;
-                    const isPositive = changePercent >= 0;
-                    
-                    reallyHappyAnswer.textContent = isPositive ? 'YES 😊' : 'NO 😟';
-                    reallyHappyAnswer.style.color = isPositive ? '#22c55e' : '#ef4444';
-                    return;
-                }
-                
-                // Stock: try Yahoo via corsproxy.io (allorigins often returns 522)
-                const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`;
-                
-                const response = await fetch(proxyUrl);
-                const data = await response.json();
-                
-                if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
-                    reallyHappyAnswer.textContent = 'Invalid ticker';
-                    reallyHappyAnswer.style.color = '#ef4444';
-                    return;
-                }
-                
-                const result = data.chart.result[0];
-                const currentPrice = result.meta.regularMarketPrice;
-                const previousClose = result.meta.previousClose;
-                
-                if (!currentPrice || !previousClose) {
-                    reallyHappyAnswer.textContent = 'Invalid ticker';
-                    reallyHappyAnswer.style.color = '#ef4444';
-                    return;
-                }
-                
-                const changePercent = ((currentPrice - previousClose) / previousClose) * 100;
-                const isPositive = changePercent >= 0;
-                
-                reallyHappyAnswer.textContent = isPositive ? 'YES 😊' : 'NO 😟';
-                reallyHappyAnswer.style.color = isPositive ? '#22c55e' : '#ef4444';
-            } catch (error) {
-                reallyHappyAnswer.textContent = 'Error fetching ticker';
-                reallyHappyAnswer.style.color = '#ef4444';
-            }
-        }
-
-        tickerInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                checkTicker(tickerInput.value.trim());
-            }
-        });
 
         function createSimulatedCursor() {
             const id = Date.now() + Math.random();
